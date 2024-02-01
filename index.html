@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera and Image Viewer</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            margin: 0;
+            background-color: #808080;
+            
+        }
+
+        #cameraContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: static;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 80vh;
+            overflow: hidden;
+            relative: position;
+        }
+
+        #mediaElement {
+            flex: 1;
+            width: 100%;
+            object-fit: cover;
+        }
+
+        #imageElement {
+            width: 50%;
+            height: 50%;
+            object-fit: contain;
+            display: none;
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+#cameraButton {
+  padding: 10px 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  position: fixed;
+  bottom: 10%;
+  left: 25%;
+  transform: translateX(-30%);
+  background: none;
+  /* إزالة خلفية اللون */
+  background-image: url('https://i.postimg.cc/G3ybbMFC/images-2.png');
+  background-size: 60px;
+  background-position: 10% center;
+  background-repeat: no-repeat;
+  padding-left: 100px;
+height: 50px;
+}
+#fileInputButton {
+    padding: 10px 10px;
+    cursor: pointer;
+    margin-top: 10px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    position: fixed;
+    bottom: 10%;
+    left: 20%;
+    transform: translateX(-60%);
+    background: none; /* إزالة خلفية اللون */
+    background-image: url('https://i.postimg.cc/D0rVLM64/images-1-1.png'); /* استبدل بمسار الصورة الخاصة بك */
+    background-size: 60px;
+    background-position: 10% center;
+    background-repeat: no-repeat;
+    padding-left: 100px;
+height: 50px;
+}
+
+
+        #fileInput {
+            display: none;
+        }
+
+      #transparencyRange {
+    width: 50%;
+    position: absolute;
+    bottom: 35%;
+    display: none
+}
+
+
+
+    </style>
+</head>
+<body>
+    <div id="cameraContainer">
+        <video id="mediaElement" autoplay></video>
+        <img id="imageElement">
+        <button id="cameraButton" onclick="openCamera()"> </button>
+        <button id="fileInputButton" onclick="openFileInput()"> </button>
+        <input type="file" id="fileInput" accept="image/*" onchange="displayImage(this)">
+        <input type="range" id="transparencyRange" value="100" max="100" onchange="changeTransparency()">
+<button id="flashButton" onclick="toggleFlash()" style="position: absolute; top: 5%; left: 10%; transform: translateX(-50%); z-index: 10; display: none; background: none; border: none;">
+    <img src="https://i.postimg.cc/FFGfM9Xq/Screenshot-2.png" alt="">
+</button>
+
+
+
+
+
+    </div>
+
+    <script>
+        let isFlashOn = false;
+let imageCapture;
+
+async function openCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const mediaElement = document.getElementById('mediaElement');
+        const imageElement = document.getElementById('imageElement');
+        
+        mediaElement.srcObject = stream;
+        mediaElement.style.display = 'block';
+        imageElement.style.display = 'none';
+
+        const track = stream.getVideoTracks()[0];
+        imageCapture = new ImageCapture(track);
+
+        await imageCapture.getPhotoCapabilities().then(capabilities => {
+            if (capabilities.torch) {
+                document.getElementById('flashButton').style.display = 'block';
+            }
+        });
+    } catch (error) {
+        console.error('Error accessing the camera:', error);
+    }
+}
+
+function toggleFlash() {
+    isFlashOn = !isFlashOn;
+    const constraints = { advanced: [{ torch: isFlashOn }] };
+    
+    if (imageCapture.track.applyConstraints) {
+        imageCapture.track.applyConstraints(constraints);
+    } else {
+        imageCapture.applyConstraints(constraints);
+    }
+}
+
+
+
+function closeCamera() {
+    const mediaElement = document.getElementById('mediaElement');
+    mediaElement.srcObject.getTracks().forEach(track => track.stop());
+    mediaElement.style.display = 'none';
+    document.getElementById('flashButton').style.display = 'none';
+}
+
+
+        function openFileInput() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.click();
+        }
+
+        function displayImage(input) {
+    const file = input.files[0];
+    if (file) {
+        const mediaElement = document.getElementById('mediaElement');
+        const imageElement = document.getElementById('imageElement');
+        const transparencyRange = document.getElementById('transparencyRange');
+
+        mediaElement.style.display = 'block';
+        imageElement.src = URL.createObjectURL(file);
+        imageElement.style.display = 'block';
+        transparencyRange.style.display = 'block'; // أضف هذا السطر
+    }
+}
+
+
+        function changeTransparency() {
+            const imageElement = document.getElementById('imageElement');
+            const transparencyRange = document.getElementById('transparencyRange');
+            const transparencyValue = transparencyRange.value;
+            imageElement.style.opacity = transparencyValue / 100;
+        }
+document.addEventListener('DOMContentLoaded', function () {
+    // أولاً، قم بإخفاء زر الفلاش عند بداية فتح الصفحة
+    document.getElementById('flashButton').style.display = 'none';
+
+    // ثم، استمع لحدث فتح الكاميرا وقم بإظهار زر الفلاش
+    document.getElementById('cameraButton').addEventListener('click', function () {
+        document.getElementById('flashButton').style.display = 'block';
+    });
+});
+
+    </script>
+</body>
+</html>
